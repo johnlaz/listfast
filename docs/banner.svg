@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="t d">
+  <title id="t">ListFast</title>
+  <desc id="d">ListFast: snap a photo, get a marketplace-ready listing.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="320" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#00A8E8"/><stop offset="1" stop-color="#0052D4"/></linearGradient>
+    <linearGradient id="tag" x1="120" y1="120" x2="400" y2="390" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#00D2FF"/><stop offset="1" stop-color="#0052D4"/></linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0D253C" flood-opacity="0.25"/></filter>
+  </defs>
+  <rect width="1280" height="320" rx="24" fill="url(#bg)"/>
+  <circle cx="1130" cy="40" r="170" fill="#fff" fill-opacity="0.07"/>
+  <circle cx="1220" cy="290" r="120" fill="#fff" fill-opacity="0.06"/>
+  <g filter="url(#sh)"><rect x="80" y="70" width="180" height="180" rx="42" fill="#fff"/></g>
+  <g transform="translate(170 160) scale(0.52) translate(-257 -256)">
+    <path d="M 180 120 L 340 120 C 355 120, 370 130, 380 142 L 395 162 C 402 172, 400 188, 390 198 L 210 380 C 198 392, 178 392, 166 380 L 124 338 C 112 326, 112 306, 124 294 L 180 120 Z" fill="url(#tag)"/>
+    <path d="M 275 145 L 220 250 L 265 250 L 210 355 L 295 235 L 250 235 Z" fill="#fff"/>
+    <circle cx="340" cy="165" r="16" fill="#fff"/>
+  </g>
+  <text x="300" y="165" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="86" font-weight="800" fill="#fff" letter-spacing="-2">ListFast</text>
+  <text x="304" y="212" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="28" font-weight="500" fill="#fff" fill-opacity="0.92">Snap a photo. Get a marketplace-ready listing.</text>
+  <text x="304" y="256" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="20" font-weight="600" fill="#fff" fill-opacity="0.8" letter-spacing="1">FREE · PRIVATE · NO ACCOUNT · RUNS IN YOUR BROWSER</text>
+</svg>
