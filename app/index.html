@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ListFast">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0052D4">
+<meta name="description" content="Snap a photo, get a marketplace-ready listing.">
+<title>ListFast</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ===== SPLASH SCREEN ===== */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #ffffff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  #splash.hide { opacity: 0; transform: scale(1.04); pointer-events: none; }
+  #splash.gone { display: none; }
+  .splash-icon {
+    width: 140px; height: 140px; border-radius: 32px;
+    box-shadow: 0 0 60px rgba(0,82,212,0.18), 0 20px 50px rgba(13,37,60,0.18);
+    margin-bottom: 28px;
+    animation: splash-drop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes splash-drop {
+    from { opacity: 0; transform: translateY(-30px) scale(0.85); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .splash-logo {
+    font-family: 'Inter', system-ui, sans-serif; font-weight: 800; font-size: 40px; letter-spacing: -0.5px;
+    color: #0052D4; line-height: 1;
+    animation: splash-fade 0.5s 0.25s ease both;
+  }
+  .splash-logo span { color: #0D253C; }
+  .splash-tagline {
+    font-family: 'Inter', system-ui, sans-serif; font-size: 13px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #5a6b80; margin-top: 8px;
+    animation: splash-fade 0.5s 0.4s ease both;
+  }
+  @keyframes splash-fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .splash-enter-btn {
+    margin-top: 52px; padding: 14px 44px; border-radius: 40px;
+    background: linear-gradient(135deg,#00A8E8,#0052D4); color: #fff;
+    font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+    border: none; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(0,82,212,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+    animation: splash-fade 0.5s 0.6s ease both;
+  }
+  .splash-enter-btn:hover { transform: scale(1.04); box-shadow: 0 8px 32px rgba(0,82,212,0.45); }
+  .splash-version {
+    position: absolute; bottom: 28px;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: #8a9bb0; letter-spacing: 0.5px;
+    animation: splash-fade 0.5s 0.8s ease both;
+  }
+  .splash-auto-bar {
+    margin-top: 48px; width: 120px; height: 2px; background: #d8e1ec; border-radius: 1px; overflow: hidden;
+    animation: splash-fade 0.3s 0.3s ease both;
+  }
+  .splash-auto-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, #00D2FF, #0052D4);
+    border-radius: 1px; animation: splash-progress 1.6s 0.5s ease forwards;
+  }
+  @keyframes splash-progress { to { width: 100%; } }
+
+  :root {
+    --bg: #f4f7fb; --surface: #ffffff; --surface2: #eef3f9; --border: #d8e1ec;
+    --accent: #0052D4; --accent2: #0E8077; --danger: #d63a4a;
+    --text: #0D253C; --muted: #5a6b80; --radius: 12px;
+    --font-display: 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); overflow-x: hidden; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; gap: 12px; }
+  .logo { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: 1px; color: var(--accent); line-height: 1; display: flex; align-items: baseline; gap: 8px; }
+  .logo span { color: var(--text); }
+  .logo .lw { color: var(--accent); }
+  .logo .lw b { font-weight: inherit; color: var(--text); }
+  .logo-version { font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; letter-spacing: 0.5px; line-height: 1; position: relative; top: -2px; }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-size: 18px; }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+  .drawer { position: fixed; top: 0; right: -340px; width: 320px; height: 100%; z-index: 201; background: var(--surface); border-left: 1px solid var(--border); padding: 20px; transition: right 0.3s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .drawer.open { right: 0; }
+  .drawer h3 { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--accent); letter-spacing: 1px; }
+  .drawer-close { position: absolute; top: 16px; right: 16px; }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 57px; z-index: 90; }
+  .tab { flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .view { display: none; padding: 16px; min-height: calc(100vh - 120px); }
+  .view.active { display: block; }
+
+  .scan-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px 16px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; position: relative; overflow: hidden; background: transparent; font-family: var(--font-body); color: var(--text); }
+  .scan-zone:hover { border-color: var(--accent); background: rgba(0,82,212,0.04); }
+  .scan-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .scan-icon { font-size: 48px; margin-bottom: 8px; }
+  .scan-zone p { color: var(--muted); font-size: 14px; }
+  .scan-zone strong { display: block; font-size: 18px; color: var(--text); margin-bottom: 4px; }
+
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 16px; display: none; }
+  .progress-bar.active { display: block; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; width: 0%; transition: width 0.4s; animation: progress-pulse 1.5s infinite; }
+  @keyframes progress-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  .listing-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+  .card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card-header-title { font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.5px; color: var(--accent); }
+  .card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .img-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .img-slot { aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; }
+  .img-slot img { width: 100%; height: 100%; object-fit: cover; }
+  .img-slot-label { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.7); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; color: var(--muted); }
+  .img-slot-action { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 6px; background: rgba(13,37,60,0.72); border: 1px solid rgba(255,255,255,0.3); color: #fff; color: var(--text); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; backdrop-filter: blur(4px); }
+  .img-slot-action:hover { background: rgba(0,82,212,0.92); color: #fff; border-color: transparent; }
+  .img-slot-action-danger:hover { background: rgba(214,58,74,0.9); color: #fff; }
+  .img-placeholder { color: var(--muted); font-size: 28px; }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+  .field-row { display: flex; gap: 8px; align-items: flex-start; }
+  .field-input, .field-textarea, .field-select { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font-body); font-size: 14px; padding: 10px 12px; outline: none; transition: border-color 0.15s; resize: none; }
+  .field-input:focus, .field-textarea:focus, .field-select:focus { border-color: var(--accent); }
+  .field-textarea { min-height: 100px; line-height: 1.5; }
+  .field-select option { background: var(--surface2); }
+  .copy-btn { min-width: 40px; height: 40px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; font-size: 16px; margin-top: 2px; }
+  .copy-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .copy-btn.copied { border-color: var(--accent2); color: var(--accent2); background: rgba(14,128,119,0.08); }
+
+  .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .spec-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-family: var(--font-mono); color: var(--text); }
+
+  .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .price-field { display: flex; flex-direction: column; gap: 6px; }
+  .price-input-wrap { position: relative; }
+  .price-sign { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--accent); font-weight: 600; font-size: 14px; }
+  .price-input { padding-left: 24px !important; }
+  .meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: var(--radius); border: none; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 14px; transition: all 0.15s; min-height: 48px; letter-spacing: 0.3px; }
+  .btn-primary { background: linear-gradient(135deg,#00A8E8,#0052D4); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(214,58,74,0.12); color: var(--danger); border: 1px solid rgba(214,58,74,0.25); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1; min-width: 120px; }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 8px 14px; font-size: 12px; min-height: 36px; border-radius: 8px; }
+
+  .ledger-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .ledger-title { font-family: var(--font-display); font-weight: 800; font-size: 28px; color: var(--accent); letter-spacing: 1px; }
+  .stats-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 12px; }
+  .stat-value { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: 0.5px; }
+  .stat-value.green { color: var(--accent2); }
+  .stat-value.yellow { color: var(--accent); }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+  .ledger-list { display: flex; flex-direction: column; gap: 12px; }
+  .ledger-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s; cursor: pointer; }
+  .ledger-card:hover { border-color: var(--accent); }
+  .ledger-card-inner { display: flex; }
+  .ledger-thumb { width: 90px; aspect-ratio: 1; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+  .ledger-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .ledger-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: var(--muted); }
+  .ledger-info { flex: 1; padding: 12px; min-width: 0; }
+  .ledger-item-title { font-weight: 600; font-size: 14px; line-height: 1.3; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ledger-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; }
+  .badge-active { background: rgba(0,82,212,0.15); color: var(--accent); }
+  .badge-sold { background: rgba(14,128,119,0.15); color: var(--accent2); }
+  .badge-draft { background: rgba(90,107,128,0.14); color: var(--muted); }
+  .ledger-prices { display: flex; gap: 12px; align-items: center; }
+  .price-tag { font-family: var(--font-mono); font-size: 13px; }
+  .price-tag.list { color: var(--accent); }
+  .price-tag.sold { color: var(--accent2); }
+  .price-tag.label { color: var(--muted); font-size: 10px; }
+  .ledger-actions { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--border); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 56px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  input[type=text], input[type=number], input[type=password], select, textarea { -webkit-appearance: none; appearance: none; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M6 8L0 0h12z' fill='%236a6a88'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px !important; }
+
+  .settings-field { display: flex; flex-direction: column; gap: 6px; }
+  .settings-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+  .settings-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font-mono); font-size: 13px; padding: 10px 12px; outline: none; transition: border-color 0.15s; }
+  .settings-input:focus { border-color: var(--accent); }
+  .divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+  .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+  .toast { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,0.5); opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: var(--accent2); color: var(--accent2); }
+  .toast.info { border-color: var(--accent); color: var(--accent); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; display: none; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
+  .modal h4 { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: 0.5px; }
+
+  /* FULL ITEM VIEW */
+  .item-view-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 400; display: none; flex-direction: column; overflow-y: auto; }
+  .item-view-overlay.open { display: flex; }
+  .item-view-header { position: sticky; top: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; z-index: 10; flex-shrink: 0; }
+  .item-view-header-title { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: 0.5px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item-view-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 560px; margin: 0 auto; width: 100%; padding-bottom: 40px; }
+
+  .spinner { width: 20px; height: 20px; border: 2px solid rgba(0,82,212,0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .generating-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .generating-overlay span { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
+
+  .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+
+  /* LEDGER TOOLBAR */
+  .ledger-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .ledger-toolbar-left { flex: 1; min-width: 0; }
+  .ledger-toolbar-right { display: flex; gap: 6px; flex-shrink: 0; }
+  .filter-select { width: 100%; background: rgba(0,82,212,0.06); border: 1px solid rgba(0,82,212,0.35); border-radius: 8px; color: var(--accent); font-family: var(--font-body); font-size: 13px; font-weight: 700; padding: 7px 30px 7px 12px; outline: none; cursor: pointer; transition: border-color 0.15s; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f0c040' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 12px; }
+  .filter-select:focus { border-color: var(--accent); }
+  .sort-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font-body); font-size: 12px; font-weight: 600; padding: 6px 28px 6px 10px; outline: none; cursor: pointer; transition: border-color 0.15s; -webkit-appearance: none; appearance: none; }
+  .sort-select:focus { border-color: var(--accent); }
+  .view-toggle-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; flex-shrink: 0; }
+  .view-toggle-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,82,212,0.08); }
+
+  /* GRID VIEW */
+  .ledger-list.view-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ledger-list.view-grid .ledger-card-inner { flex-direction: column; }
+  .ledger-list.view-grid .ledger-thumb { width: 100%; aspect-ratio: 1; }
+  .ledger-list.view-grid .ledger-info { padding: 10px; }
+  .ledger-list.view-grid .ledger-item-title { font-size: 12px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ledger-list.view-grid .ledger-meta { margin-bottom: 4px; }
+  .ledger-list.view-grid .ledger-prices { flex-wrap: wrap; gap: 8px; }
+  .ledger-list.view-grid .ledger-actions { padding: 8px; }
+  .ledger-list.view-grid .ledger-actions .btn { font-size: 11px; padding: 6px 8px; }
+
+  /* COMPACT VIEW */
+  .ledger-list.view-compact .ledger-card-inner { align-items: center; }
+  .ledger-list.view-compact .ledger-thumb { width: 54px; height: 54px; aspect-ratio: unset; flex-shrink: 0; }
+  .ledger-list.view-compact .ledger-info { padding: 8px 10px; display: flex; flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ledger-list.view-compact .ledger-item-title { font-size: 13px; flex: 1; min-width: 120px; margin-bottom: 0; }
+  .ledger-list.view-compact .ledger-meta { margin-bottom: 0; flex-shrink: 0; }
+  .ledger-list.view-compact .ledger-prices { flex-shrink: 0; }
+  .ledger-list.view-compact .ledger-actions { display: none; }
+  .ledger-list.view-compact .ledger-card { cursor: pointer; }
+
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+  /* SETTINGS BACKUP SECTION */
+  .settings-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 2px 0; }
+
+  @media (min-width: 480px) { .view { padding: 20px; max-width: 560px; margin: 0 auto; } }
+</style>
+</head>
+<body>
+
+<!-- ===== SPLASH SCREEN ===== -->
+<div id="splash">
+  <img class="splash-icon" src="icon-192.png" alt="ListFast">
+  <div class="splash-logo">List<span>Fast</span></div>
+  <div class="splash-tagline">Snap it. List it. Sold.</div>
+  <div id="splashAction"></div>
+  <div class="splash-version" id="splashVersion"></div>
+</div>
+
+<header>
+  <div class="logo"><span class="lw">List<b>Fast</b></span><span class="logo-version" id="appVersion"></span></div>
+  <div class="header-actions">
+    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="settingsDrawer">
+  <button class="icon-btn drawer-close" id="drawerClose" aria-label="Close settings">✕</button>
+  <h3>Settings</h3>
+  <div class="settings-field">
+    <label class="settings-label">Groq API Key</label>
+    <input class="settings-input" id="groqKey" type="password" placeholder="gsk_..." autocomplete="off">
+  </div>
+  <div class="settings-field">
+    <label class="settings-label">Gemini API Key</label>
+    <input class="settings-input" id="geminiKey" type="password" placeholder="AIza..." autocomplete="off">
+  </div>
+  <div class="divider"></div>
+  <div class="settings-field">
+    <label class="settings-label">Image Generation</label>
+    <select class="settings-input" id="imgProvider">
+      <option value="pollinations">Pollinations.ai (Free, no key)</option>
+      <option value="gemini">Gemini Imagen (key required)</option>
+    </select>
+  </div>
+  <div class="divider"></div>
+  <div class="settings-section-title">AI Models</div>
+  <div class="settings-field">
+    <label class="settings-label" for="groqVisionModel">Groq vision model</label>
+    <select class="settings-input" id="groqVisionModel"></select>
+  </div>
+  <div class="settings-field">
+    <label class="settings-label" for="groqTextModel">Groq text model</label>
+    <select class="settings-input" id="groqTextModel"></select>
+  </div>
+  <div class="settings-field">
+    <label class="settings-label" for="geminiImgModel">Gemini image model</label>
+    <select class="settings-input" id="geminiImgModel"></select>
+  </div>
+  <button class="btn btn-secondary btn-sm btn-full" id="refreshModelsBtn" type="button">↻ Refresh model lists</button>
+  <div class="settings-label" id="modelStatus" style="text-transform:none;letter-spacing:0;font-weight:500;line-height:1.4">Lists refresh when you save a key. Your current models are never swapped automatically.</div>
+  <div class="divider"></div>
+  <button class="btn btn-primary btn-full" id="saveSettings">Save Settings</button>
+  <div class="divider"></div>
+  <div class="settings-section-title">Data Management</div>
+  <button class="btn btn-secondary btn-full" id="exportBtn">⬇ Export Ledger JSON</button>
+  <div style="position:relative">
+    <button class="btn btn-secondary btn-full" style="pointer-events:none">⬆ Import Ledger JSON</button>
+    <input type="file" id="importFile" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+  </div>
+  <div class="divider"></div>
+  <div class="settings-section-title">Settings Backup</div>
+  <button class="btn btn-secondary btn-full" id="exportSettingsBtn">⬇ Export Settings + Keys</button>
+  <div style="position:relative">
+    <button class="btn btn-secondary btn-full" style="pointer-events:none">⬆ Import Settings + Keys</button>
+    <input type="file" id="importSettingsFile" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+  </div>
+  <div class="divider"></div>
+  <button class="btn btn-secondary btn-full" id="printReportBtn">🖨 Print / Save PDF Report</button>
+  <button class="btn btn-danger btn-sm btn-full" id="clearLedgerBtn">🗑 Clear All Data</button>
+</div>
+
+<div class="tabs" role="tablist">
+  <div class="tab active" data-tab="scan" role="tab" tabindex="0">📷 Scan</div>
+  <div class="tab" data-tab="ledger" role="tab" tabindex="0">📋 Ledger</div>
+</div>
+
+<!-- SCAN VIEW -->
+<div class="view active" id="view-scan">
+  <!-- Hidden file inputs -->
+  <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <button class="scan-zone" id="cameraBtn" type="button" style="margin-bottom:0;width:100%">
+      <div class="scan-icon">📷</div>
+      <strong>Take Photo</strong>
+      <p>Open camera</p>
+    </button>
+    <button class="scan-zone" id="fileBtn" type="button" style="margin-bottom:0;width:100%">
+      <div class="scan-icon">🖼️</div>
+      <strong>Choose File</strong>
+      <p>Gallery or files</p>
+    </button>
+  </div>
+  <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="listing-card" id="listingCard" style="display:none">
+    <div class="card-header">
+      <span class="card-header-title">LISTING DRAFT</span>
+      <button class="btn btn-secondary btn-sm" id="resetBtn">✕ Reset</button>
+    </div>
+    <div class="card-body" id="scanCardBody"></div>
+  </div>
+</div>
+
+<!-- LEDGER VIEW -->
+<div class="view" id="view-ledger">
+  <div class="ledger-header"><div class="ledger-title">MY LEDGER</div></div>
+  <div class="stats-strip">
+    <div class="stat-card"><div class="stat-value yellow" id="statTotal">0</div><div class="stat-label">Items</div></div>
+    <div class="stat-card"><div class="stat-value yellow" id="statListed">$0</div><div class="stat-label">Listed</div></div>
+    <div class="stat-card"><div class="stat-value green" id="statEarned">$0</div><div class="stat-label">Earned</div></div>
+  </div>
+  <!-- TOOLBAR: filters + sort + view toggle -->
+  <div class="ledger-toolbar">
+    <div class="ledger-toolbar-left">
+      <select class="filter-select" id="filterSelect">
+        <option value="All">📋 All Items</option>
+        <option value="Active">🟢 Active</option>
+        <option value="Sold">✅ Sold</option>
+        <option value="Draft">📝 Draft</option>
+      </select>
+    </div>
+    <div class="ledger-toolbar-right">
+      <select class="sort-select" id="sortSelect" title="Sort by">
+        <option value="date-desc">Newest</option>
+        <option value="date-asc">Oldest</option>
+        <option value="list-desc">Price ↓</option>
+        <option value="list-asc">Price ↑</option>
+        <option value="profit-desc">Profit ↓</option>
+        <option value="title-asc">A→Z</option>
+      </select>
+      <button class="view-toggle-btn active" id="viewCard" title="Card view">☰</button>
+      <button class="view-toggle-btn" id="viewGrid" title="Grid view">⊞</button>
+      <button class="view-toggle-btn" id="viewCompact" title="Compact view">≡</button>
+    </div>
+  </div>
+  <div class="ledger-list" id="ledgerList">
+    <div class="empty-state"><div class="icon">📋</div><p>No items yet.<br>Scan an item and save it to build your ledger.</p></div>
+  </div>
+</div>
+
+<!-- FULL ITEM VIEW OVERLAY -->
+<div class="item-view-overlay" id="itemViewOverlay">
+  <div class="item-view-header">
+    <button class="icon-btn" id="itemViewBack">←</button>
+    <div class="item-view-header-title" id="itemViewTitle">Item Detail</div>
+    <button class="btn btn-danger btn-sm" id="itemViewDeleteBtn" style="flex-shrink:0">🗑 Delete</button>
+  </div>
+  <div class="item-view-body" id="itemViewBody"></div>
+</div>
+
+<!-- QUICK EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h4>Quick Edit</h4>
+    <input type="hidden" id="editId">
+    <div class="field-group"><label class="field-label">Title</label><input type="text" class="field-input" id="editTitle"></div>
+    <div class="price-row">
+      <div class="price-field"><label class="field-label">List Price</label><div class="price-input-wrap"><span class="price-sign">$</span><input type="number" class="field-input price-input" id="editListPrice" min="0" step="0.01"></div></div>
+      <div class="price-field"><label class="field-label">Sold Price</label><div class="price-input-wrap"><span class="price-sign">$</span><input type="number" class="field-input price-input" id="editSoldPrice" min="0" step="0.01"></div></div>
+    </div>
+    <div class="meta-row">
+      <div class="field-group"><label class="field-label">Platform</label><select class="field-select" id="editPlatform"><option>Facebook Marketplace</option><option>eBay</option><option>Craigslist</option><option>OfferUp</option><option>Mercari</option><option>Other</option></select></div>
+      <div class="field-group"><label class="field-label">Status</label><select class="field-select" id="editStatus"><option>Draft</option><option>Active</option><option>Sold</option></select></div>
+    </div>
+    <div class="field-group"><label class="field-label">Notes</label><textarea class="field-textarea" id="editNotes" style="min-height:60px"></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="editSaveBtn">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===== STATE =====
+let currentScan = null;
+let activeFilter = 'All';
+let activeSort = 'date-desc';
+let ledgerView = 'card'; // 'card' | 'grid' | 'compact'
+let viewingItemId = null;
+let viewItemScan = {};
+// DB name and mm_* localStorage keys are intentionally unchanged so existing MarketMaster data carries over.
+const DB_NAME = 'MarketMasterDB', DB_VERSION = 1;
+let db = null;
+
+// ===== INDEXEDDB =====
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => { if (!e.target.result.objectStoreNames.contains('images')) e.target.result.createObjectStore('images', { keyPath: 'id' }); };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = () => rej(req.error);
+  });
+}
+function saveImage(id, dataUrl) {
+  return new Promise((res, rej) => {
+    if (!db || !dataUrl) { res(); return; }
+    const tx = db.transaction('images', 'readwrite');
+    tx.objectStore('images').put({ id, dataUrl });
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+function loadImage(id) {
+  return new Promise(res => {
+    if (!db) { res(null); return; }
+    const req = db.transaction('images', 'readonly').objectStore('images').get(id);
+    req.onsuccess = () => res(req.result ? req.result.dataUrl : null);
+    req.onerror = () => res(null);
+  });
+}
+function deleteImage(id) { if (db) db.transaction('images', 'readwrite').objectStore('images').delete(id); }
+
+// ===== LEDGER =====
+function getLedger() { try { return JSON.parse(localStorage.getItem('mm_ledger') || '[]'); } catch { return []; } }
+function saveLedger(d) { localStorage.setItem('mm_ledger', JSON.stringify(d)); }
+function addToLedger(item) { const l = getLedger(); l.unshift(item); saveLedger(l); }
+function updateLedgerItem(id, updates) { const l = getLedger(), idx = l.findIndex(i => i.id === id); if (idx !== -1) { l[idx] = { ...l[idx], ...updates }; saveLedger(l); } }
+function deleteFromLedger(id) { saveLedger(getLedger().filter(i => i.id !== id)); deleteImage(id); deleteImage(id + '_hero'); }
+function getLedgerItem(id) { return getLedger().find(i => i.id === id) || null; }
+
+// ===== SETTINGS =====
+function getSettings() { return { groqKey: localStorage.getItem('mm_groq') || '', geminiKey: localStorage.getItem('mm_gemini') || '', imgProvider: localStorage.getItem('mm_imgprov') || 'pollinations' }; }
+function loadSettings() { const s = getSettings(); document.getElementById('groqKey').value = s.groqKey; document.getElementById('geminiKey').value = s.geminiKey; document.getElementById('imgProvider').value = s.imgProvider; fillAllModelSelects(); }
+
+
+// ===== VERSION (keep in step with CACHE in sw.js) =====
+const APP_VERSION = '1.3';
+
+// ===== MODELS =====
+// Existing models stay the defaults. Lists only ADD options; nothing is ever swapped automatically.
+const DEFAULT_MODELS = { groqVision: 'meta-llama/llama-4-scout-17b-16e-instruct', groqText: 'llama-3.3-70b-versatile', geminiImg: 'imagen-3.0-generate-002' };
+function getModel(kind) { return localStorage.getItem('mm_model_' + kind) || DEFAULT_MODELS[kind]; }
+function getModelList(provider) { try { return JSON.parse(localStorage.getItem('mm_models_' + provider) || '[]'); } catch { return []; } }
+function fillModelSelect(selId, kind, provider) {
+  const sel = document.getElementById(selId); if (!sel) return;
+  const fetched = getModelList(provider), cur = getModel(kind);
+  const ids = [...new Set([DEFAULT_MODELS[kind], cur, ...fetched])];
+  sel.innerHTML = '';
+  ids.forEach(id => {
+    const o = document.createElement('option'); o.value = id;
+    const stale = fetched.length && !fetched.includes(id);
+    o.textContent = id + (id === DEFAULT_MODELS[kind] ? ' (default)' : '') + (stale ? ' (not in latest list)' : '');
+    sel.appendChild(o);
+  });
+  sel.value = cur;
+}
+function fillAllModelSelects() {
+  fillModelSelect('groqVisionModel', 'groqVision', 'groq');
+  fillModelSelect('groqTextModel', 'groqText', 'groq');
+  fillModelSelect('geminiImgModel', 'geminiImg', 'gemini');
+}
+function setModelStatus(msg) { const el = document.getElementById('modelStatus'); if (el) el.textContent = msg; }
+async function refreshModels(provider) {
+  const s = getSettings();
+  try {
+    if (provider === 'groq') {
+      if (!s.groqKey) return 'Groq: no key';
+      const res = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${s.groqKey}` } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const ids = (data.data || []).map(m => m.id).filter(id => id && !/whisper|guard|tts|orpheus|playai|embed|moderation/i.test(id)).sort();
+      localStorage.setItem('mm_models_groq', JSON.stringify(ids));
+      return `Groq: ${ids.length} models`;
+    }
+    if (provider === 'gemini') {
+      if (!s.geminiKey) return 'Gemini: no key';
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': s.geminiKey } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const ids = (data.models || []).filter(m => /imagen/i.test(m.name) && (m.supportedGenerationMethods || []).includes('predict')).map(m => m.name.replace(/^models\//, '')).sort();
+      localStorage.setItem('mm_models_gemini', JSON.stringify(ids));
+      return `Gemini: ${ids.length} image models`;
+    }
+  } catch (e) { return `${provider === 'groq' ? 'Groq' : 'Gemini'}: refresh failed (${e.message})`; }
+  return '';
+}
+async function refreshAllModels() {
+  setModelStatus('Refreshing…');
+  const out = [await refreshModels('groq'), await refreshModels('gemini')].filter(Boolean);
+  fillAllModelSelects();
+  const flagged = ['groqVision', 'groqText'].filter(k => getModelList('groq').length && !getModelList('groq').includes(getModel(k)))
+    .concat(getModelList('gemini').length && !getModelList('gemini').includes(getModel('geminiImg')) ? ['geminiImg'] : []);
+  setModelStatus(out.join(' · ') + (flagged.length ? ' · A selected model is not in the latest list. It is kept, but may stop working.' : ''));
+}
+
+// ===== TOAST =====
+function toast(msg, type = 'info', dur = 2800) {
+  const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ===== PROGRESS =====
+let progressInterval = null;
+function startProgress() {
+  const bar = document.getElementById('progressBar'), fill = document.getElementById('progressFill');
+  bar.classList.add('active'); let p = 0; fill.style.width = '0%';
+  progressInterval = setInterval(() => { p = Math.min(p + Math.random() * 8, 88); fill.style.width = p + '%'; }, 200);
+}
+function endProgress() { clearInterval(progressInterval); document.getElementById('progressFill').style.width = '100%'; setTimeout(() => document.getElementById('progressBar').classList.remove('active'), 500); }
+
+// ===== API =====
+function safeParseJSON(raw) {
+  // 1. Strip markdown fences
+  let s = raw.replace(/```json|```/g, '').trim();
+  // 2. Extract the first {...} block in case model adds prose around it
+  const match = s.match(/\{[\s\S]*\}/);
+  if (match) s = match[0];
+  // 3. Replace literal control characters inside JSON strings with their escape sequences
+  //    (handles real newlines, tabs, carriage returns that break JSON.parse)
+  s = s.replace(/[\u0000-\u001F\u007F]/g, ch => {
+    const escapes = { '\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f' };
+    return escapes[ch] || '';
+  });
+  return JSON.parse(s);
+}
+
+async function identifyImage(base64, mimeType) {
+  const key = getSettings().groqKey; if (!key) throw new Error('No Groq API key. Add one in Settings.');
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: getModel('groqVision'), max_tokens: 512, messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } }, { type: 'text', text: 'Analyze this image. Return ONLY a valid JSON object: {"brand":"string or null","model":"string or null","category":"string","condition_estimate":"Excellent|Good|Fair|Poor","technical_specs":["spec1","spec2","spec3"],"suggested_short_title":"string"} No markdown, no extra text.' }] }] })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Groq vision error'); }
+  const data = await res.json();
+  return safeParseJSON(data.choices[0].message.content);
+}
+async function generateDescription(metadata, style) {
+  const key = getSettings().groqKey; if (!key) throw new Error('No Groq API key.');
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: getModel('groqText'), max_tokens: 600, messages: [{ role: 'user', content: `Act as an expert reseller. Using this item metadata: ${JSON.stringify(metadata)}, write a ${style} listing for Facebook Marketplace. Include: 1. A compelling hook 2. Bullet points for specs (3-5) 3. Condition note 4. Call to action. Return ONLY JSON: {"title":"string","description":"string"} No markdown.` }] })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Groq text error'); }
+  const data = await res.json();
+  return safeParseJSON(data.choices[0].message.content);
+}
+async function generateHeroShot(itemName, brand) {
+  const s = getSettings(), subject = [brand, itemName].filter(Boolean).join(' ');
+  const pt = `Professional e-commerce product photography of ${subject} on a clean white studio background, dramatic lighting, sharp focus, commercial quality, 4k`;
+  if (s.imgProvider === 'gemini' && s.geminiKey) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${getModel('geminiImg')}:predict`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': s.geminiKey }, body: JSON.stringify({ instances: [{ prompt: pt }], parameters: { sampleCount: 1, aspectRatio: '1:1' } }) });
+    if (!res.ok) throw new Error('Gemini image error');
+    const data = await res.json(), b64 = data.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) throw new Error('No image from Gemini');
+    return `data:image/png;base64,${b64}`;
+  } else {
+    const res = await fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(pt)}?width=512&height=512&seed=${Date.now()}&nologo=true`);
+    if (!res.ok) throw new Error('Pollinations error');
+    const blob = await res.blob();
+    return new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+  }
+}
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onerror = rej;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        const MAX = 1024;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        res({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg', dataUrl });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtMoney(v) { if (v == null || isNaN(v) || v === '') return '—'; return '$' + parseFloat(v).toFixed(2); }
+
+// ==================================
+// ===== CARD HTML BUILDER ==========
+// ==================================
+function buildCardBodyHTML(prefix, data) {
+  const m = data.metadata || {}, specs = m.technical_specs || [];
+  const platforms = ['Facebook Marketplace','eBay','Craigslist','OfferUp','Mercari','Other'];
+  const statuses = ['Draft','Active','Sold'];
+  const styles = ['Professional','Catchy / Casual','Minimalist','Urgent / Must Sell'];
+  return `
+    <div class="img-row">
+      <div class="img-slot" id="${prefix}origSlot">
+        ${data.imageDataUrl ? `<img id="${prefix}origImg" src="${data.imageDataUrl}" alt="Original photo of the item">` : `<span id="${prefix}origImg" class="img-placeholder">📷</span>`}
+        <span class="img-slot-label">Original</span>
+        <button class="img-slot-action" id="${prefix}retakeBtn" title="Replace photo">↺</button>
+        <input type="file" id="${prefix}retakeInput" accept="image/*" style="display:none">
+      </div>
+      <div class="img-slot" id="${prefix}heroSlot">
+        ${data.heroDataUrl ? `<img id="${prefix}heroImg" src="${data.heroDataUrl}" alt="Generated product shot">` : `<span id="${prefix}heroImg" class="img-placeholder">✨</span>`}
+        <span class="img-slot-label">Hero Shot</span>
+        ${data.heroDataUrl ? `<button class="img-slot-action img-slot-action-danger" id="${prefix}clearHeroBtn" title="Delete hero">✕</button>` : ''}
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Title</label>
+      <div class="field-row">
+        <input type="text" class="field-input" id="${prefix}titleField" value="${escHtml(data.title||'')}">
+        <button class="copy-btn" data-copy="${prefix}titleField">⎘</button>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Listing Style</label>
+      <select class="field-select" id="${prefix}styleSelect">${styles.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Description</label>
+      <div class="field-row">
+        <textarea class="field-textarea" id="${prefix}descField">${escHtml(data.description||'')}</textarea>
+        <button class="copy-btn" data-copy="${prefix}descField">⎘</button>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="${prefix}regenBtn" style="align-self:flex-start">↻ Regen Description</button>
+    </div>
+    ${specs.length ? `<div class="field-group"><span class="field-label">Identified Specs</span><div class="specs-grid">${specs.map(s=>`<div class="spec-chip">${escHtml(s)}</div>`).join('')}</div></div>` : ''}
+    <button class="btn btn-secondary btn-full" id="${prefix}heroBtn">✨ Generate Hero Shot</button>
+    <button class="btn btn-secondary btn-sm" id="${prefix}downloadHeroBtn" ${data.heroDataUrl?'':'disabled'}>⬇ Download Hero</button>
+    <div class="divider"></div>
+    <span class="section-label">Listing Details</span>
+    <div class="price-row">
+      <div class="price-field"><label class="field-label">List Price</label><div class="price-input-wrap"><span class="price-sign">$</span><input type="number" class="field-input price-input" id="${prefix}listPrice" value="${data.listPrice??''}" placeholder="0.00" min="0" step="0.01"></div></div>
+      <div class="price-field"><label class="field-label">Sold Price</label><div class="price-input-wrap"><span class="price-sign">$</span><input type="number" class="field-input price-input" id="${prefix}soldPrice" value="${data.soldPrice??''}" placeholder="0.00" min="0" step="0.01"></div></div>
+    </div>
+    <div class="meta-row">
+      <div class="field-group"><label class="field-label">Platform</label><select class="field-select" id="${prefix}platform">${platforms.map(p=>`<option value="${p}" ${data.platform===p?'selected':''}>${p==='Facebook Marketplace'?'FB Marketplace':p}</option>`).join('')}</select></div>
+      <div class="field-group"><label class="field-label">Status</label><select class="field-select" id="${prefix}status">${statuses.map(s=>`<option value="${s}" ${data.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-group"><label class="field-label">Notes</label><textarea class="field-textarea" id="${prefix}notes" style="min-height:60px">${escHtml(data.notes||'')}</textarea></div>
+    <button class="btn btn-primary btn-full" id="${prefix}saveBtn">${data._isSaved ? '💾 Save Changes' : '💾 Save to Ledger'}</button>
+  `;
+}
+
+function collectFields(prefix) {
+  const g = id => document.getElementById(id);
+  return {
+    title: g(`${prefix}titleField`)?.value || '',
+    description: g(`${prefix}descField`)?.value || '',
+    listPrice: parseFloat(g(`${prefix}listPrice`)?.value) || null,
+    soldPrice: parseFloat(g(`${prefix}soldPrice`)?.value) || null,
+    platform: g(`${prefix}platform`)?.value || 'Facebook Marketplace',
+    status: g(`${prefix}status`)?.value || 'Draft',
+    notes: g(`${prefix}notes`)?.value || '',
+  };
+}
+
+// ==================================
+// ===== WIRE CARD EVENTS ===========
+// ==================================
+function wireCard(prefix, scanState, onSave) {
+  const g = id => document.getElementById(id);
+
+  // Copy buttons
+  document.querySelectorAll(`[data-copy^="${prefix}"]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = g(btn.dataset.copy); if (!el) return;
+      navigator.clipboard.writeText(el.value || el.textContent).then(() => {
+        btn.classList.add('copied'); btn.textContent = '✓';
+        setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⎘'; }, 1800);
+      });
+      if (navigator.vibrate) navigator.vibrate(40);
+    });
+  });
+
+  // Regen description
+  const regenBtn = g(`${prefix}regenBtn`);
+  if (regenBtn) {
+    regenBtn.addEventListener('click', async () => {
+      if (!scanState.metadata) { toast('No item metadata', 'error'); return; }
+      regenBtn.disabled = true; regenBtn.innerHTML = '<div class="spinner"></div>';
+      try {
+        const copy = await generateDescription(scanState.metadata, g(`${prefix}styleSelect`).value);
+        g(`${prefix}titleField`).value = copy.title;
+        g(`${prefix}descField`).value = copy.description;
+        toast('Refreshed ✓', 'success');
+      } catch (err) { toast(err.message, 'error', 4000); }
+      regenBtn.disabled = false; regenBtn.innerHTML = '↻ Regen Description';
+    });
+    g(`${prefix}styleSelect`)?.addEventListener('change', () => regenBtn.click());
+  }
+
+  // ── Retake / replace original photo ──
+  const retakeBtn = g(`${prefix}retakeBtn`);
+  const retakeInput = g(`${prefix}retakeInput`);
+  if (retakeBtn && retakeInput) {
+    retakeBtn.addEventListener('click', () => retakeInput.click());
+    retakeInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const { base64, mimeType, dataUrl } = await fileToBase64(file);
+        // Update the image in the slot
+        const origSlot = g(`${prefix}origSlot`);
+        let origImg = g(`${prefix}origImg`);
+        if (origImg.tagName === 'SPAN') {
+          const ni = document.createElement('img'); ni.id = `${prefix}origImg`;
+          origImg.replaceWith(ni); origImg = ni;
+        }
+        origImg.src = dataUrl;
+        scanState.imageDataUrl = dataUrl;
+        // If this is a saved item, re-run AI identification on the new photo
+        if (scanState.metadata) {
+          toast('Analyzing new photo...', 'info', 2000);
+          try {
+            const metadata = await identifyImage(base64, mimeType);
+            scanState.metadata = metadata;
+            const copy = await generateDescription(metadata, g(`${prefix}styleSelect`)?.value || 'Professional');
+            g(`${prefix}titleField`).value = copy.title;
+            g(`${prefix}descField`).value = copy.description;
+            // Refresh specs if present
+            const specsEl = origSlot?.closest('.card-body, .item-view-body')?.querySelector('.specs-grid');
+            if (specsEl && metadata.technical_specs) {
+              specsEl.innerHTML = metadata.technical_specs.map(s => `<div class="spec-chip">${escHtml(s)}</div>`).join('');
+            }
+            toast('New photo analyzed ✓', 'success');
+          } catch { toast('Photo replaced (could not re-analyze)', 'info'); }
+        } else {
+          toast('Photo replaced ✓', 'success');
+        }
+        // If item is already saved, persist the new photo
+        if (viewingItemId) await saveImage(viewingItemId, dataUrl);
+      } catch (err) { toast('Replace failed: ' + err.message, 'error'); }
+      e.target.value = '';
+    });
+  }
+
+  // ── Hero shot: generate / clear / download ──
+  function setHeroSlotContent(dataUrl) {
+    const slot = g(`${prefix}heroSlot`); if (!slot) return;
+    // Remove existing clear btn if any
+    slot.querySelectorAll('.img-slot-action-danger').forEach(b => b.remove());
+    let heroImg = g(`${prefix}heroImg`);
+    if (dataUrl) {
+      if (!heroImg || heroImg.tagName === 'SPAN') {
+        const ni = document.createElement('img'); ni.id = `${prefix}heroImg`;
+        if (heroImg) heroImg.replaceWith(ni); else slot.prepend(ni);
+        heroImg = ni;
+      }
+      heroImg.src = dataUrl;
+      // Add clear button
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'img-slot-action img-slot-action-danger'; clearBtn.id = `${prefix}clearHeroBtn`;
+      clearBtn.title = 'Delete hero shot'; clearBtn.textContent = '✕';
+      slot.appendChild(clearBtn);
+      wireClearHero(clearBtn);
+    } else {
+      // Replace img with placeholder span
+      if (heroImg && heroImg.tagName === 'IMG') {
+        const sp = document.createElement('span'); sp.id = `${prefix}heroImg`; sp.className = 'img-placeholder'; sp.textContent = '✨';
+        heroImg.replaceWith(sp);
+      }
+    }
+    const dlBtn = g(`${prefix}downloadHeroBtn`); if (dlBtn) dlBtn.disabled = !dataUrl;
+  }
+
+  function wireClearHero(clearBtn) {
+    clearBtn.addEventListener('click', async () => {
+      scanState.heroDataUrl = null;
+      setHeroSlotContent(null);
+      if (viewingItemId) { deleteImage(viewingItemId + '_hero'); }
+      toast('Hero shot removed', 'info');
+    });
+  }
+
+  // Wire existing clear btn if hero was already present on open
+  const existingClearBtn = g(`${prefix}clearHeroBtn`);
+  if (existingClearBtn) wireClearHero(existingClearBtn);
+
+  const heroBtn = g(`${prefix}heroBtn`);
+  if (heroBtn) {
+    heroBtn.addEventListener('click', async () => {
+      if (!scanState.metadata) { toast('No item metadata', 'error'); return; }
+      heroBtn.disabled = true; heroBtn.innerHTML = '<div class="spinner"></div> Generating...';
+      // Always clear existing hero first so slot is clean
+      setHeroSlotContent(null);
+      const slot = g(`${prefix}heroSlot`);
+      const ov = document.createElement('div'); ov.className = 'generating-overlay'; ov.innerHTML = '<div class="spinner"></div><span>AI generating...</span>'; slot.appendChild(ov);
+      try {
+        const heroDataUrl = await generateHeroShot(scanState.metadata.suggested_short_title, scanState.metadata.brand);
+        scanState.heroDataUrl = heroDataUrl;
+        setHeroSlotContent(heroDataUrl);
+        if (viewingItemId) await saveImage(viewingItemId + '_hero', heroDataUrl);
+        toast('Hero shot ready! ✓', 'success');
+      } catch (err) { toast('Image gen failed: ' + err.message, 'error', 4000); }
+      if (slot.contains(ov)) slot.removeChild(ov);
+      heroBtn.disabled = false; heroBtn.innerHTML = '✨ Generate Hero Shot';
+    });
+  }
+
+  // Download Hero
+  g(`${prefix}downloadHeroBtn`)?.addEventListener('click', () => {
+    if (!scanState.heroDataUrl) return;
+    const a = document.createElement('a'); a.href = scanState.heroDataUrl; a.download = `hero_${Date.now()}.png`; a.click();
+  });
+
+  // Save
+  g(`${prefix}saveBtn`)?.addEventListener('click', async () => {
+    const btn = g(`${prefix}saveBtn`);
+    btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Saving...';
+    try { await onSave(); } catch (err) { toast(err.message, 'error'); }
+    btn.disabled = false; btn.innerHTML = '💾 ' + (scanState._isSaved ? 'Save Changes' : 'Save to Ledger');
+  });
+}
+
+// ==================================
+// ===== SCAN FLOW ==================
+// ==================================
+function resetScan() { currentScan = null; document.getElementById('listingCard').style.display = 'none'; document.getElementById('scanCardBody').innerHTML = ''; }
+
+document.getElementById('cameraBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+document.getElementById('fileBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+
+
+async function handleScan(e) {
+  const file = e.target.files[0]; if (!file) return;
+  // Reset UI state without nulling currentScan so async results can be stored
+  document.getElementById('listingCard').style.display = 'none';
+  document.getElementById('scanCardBody').innerHTML = '';
+  currentScan = {};
+  const { base64, mimeType, dataUrl } = await fileToBase64(file);
+  currentScan.imageDataUrl = dataUrl;
+  startProgress();
+  try {
+    const metadata = await identifyImage(base64, mimeType);
+    currentScan.metadata = metadata;
+    const copy = await generateDescription(metadata, 'Professional');
+    currentScan.title = copy.title; currentScan.description = copy.description;
+    endProgress();
+    document.getElementById('scanCardBody').innerHTML = buildCardBodyHTML('sc_', { imageDataUrl: currentScan.imageDataUrl, heroDataUrl: null, title: copy.title, description: copy.description, metadata, listPrice: null, soldPrice: null, platform: 'Facebook Marketplace', status: 'Draft', notes: '', _isSaved: false });
+    wireCard('sc_', currentScan, async () => {
+      const fields = collectFields('sc_');
+      const id = 'item_' + Date.now();
+      const item = { id, ...fields, metadata: currentScan.metadata, createdAt: new Date().toISOString() };
+      await saveImage(id, currentScan.imageDataUrl || null);
+      await saveImage(id + '_hero', currentScan.heroDataUrl || null);
+      addToLedger(item); renderLedger();
+      toast('Saved to ledger ✓', 'success');
+      resetScan();
+      setTimeout(() => switchTab('ledger'), 500);
+    });
+    document.getElementById('listingCard').style.display = 'block';
+    toast('Item identified! ✓', 'success');
+  } catch (err) { endProgress(); toast(err.message, 'error', 4000); }
+  e.target.value = '';
+}
+
+document.getElementById('photoInput').addEventListener('change', handleScan);
+document.getElementById('fileInput').addEventListener('change', handleScan);
+
+
+document.getElementById('resetBtn').addEventListener('click', resetScan);
+
+// ==================================
+// ===== ITEM VIEW OVERLAY ==========
+// ==================================
+async function openItemView(id) {
+  const item = getLedgerItem(id); if (!item) return;
+  viewingItemId = id;
+  const imgDataUrl = await loadImage(id), heroDataUrl = await loadImage(id + '_hero');
+  viewItemScan = { metadata: item.metadata, imageDataUrl: imgDataUrl, heroDataUrl, _isSaved: true };
+  document.getElementById('itemViewTitle').textContent = item.title || 'Item Detail';
+  document.getElementById('itemViewBody').innerHTML = buildCardBodyHTML('vw_', { imageDataUrl: imgDataUrl, heroDataUrl, title: item.title, description: item.description, metadata: item.metadata, listPrice: item.listPrice, soldPrice: item.soldPrice, platform: item.platform, status: item.status, notes: item.notes, _isSaved: true });
+  wireCard('vw_', viewItemScan, async () => {
+    const fields = collectFields('vw_');
+    if (viewItemScan.heroDataUrl) await saveImage(viewingItemId + '_hero', viewItemScan.heroDataUrl);
+    updateLedgerItem(viewingItemId, fields);
+    renderLedger();
+    document.getElementById('itemViewTitle').textContent = fields.title || 'Item Detail';
+    toast('Item updated ✓', 'success');
+  });
+  document.getElementById('itemViewOverlay').classList.add('open');
+  document.getElementById('itemViewOverlay').scrollTop = 0;
+}
+
+document.getElementById('itemViewBack').addEventListener('click', () => {
+  document.getElementById('itemViewOverlay').classList.remove('open');
+  viewingItemId = null; renderLedger();
+});
+document.getElementById('itemViewDeleteBtn').addEventListener('click', () => {
+  if (!viewingItemId) return;
+  if (confirm('Delete this item from the ledger?')) {
+    deleteFromLedger(viewingItemId);
+    document.getElementById('itemViewOverlay').classList.remove('open');
+    viewingItemId = null; renderLedger(); toast('Item deleted', 'info');
+  }
+});
+
+// ==================================
+// ===== LEDGER RENDER ==============
+// ==================================
+function sortLedger(items) {
+  return [...items].sort((a, b) => {
+    switch (activeSort) {
+      case 'date-asc':  return new Date(a.createdAt||0) - new Date(b.createdAt||0);
+      case 'date-desc': return new Date(b.createdAt||0) - new Date(a.createdAt||0);
+      case 'list-desc': return (b.listPrice||0) - (a.listPrice||0);
+      case 'list-asc':  return (a.listPrice||0) - (b.listPrice||0);
+      case 'profit-desc': return ((b.soldPrice||0)-(b.listPrice||0)) - ((a.soldPrice||0)-(a.listPrice||0));
+      case 'title-asc': return (a.title||'').localeCompare(b.title||'');
+      default: return 0;
+    }
+  });
+}
+async function renderLedger() {
+  const all = getLedger();
+  const filtered = activeFilter === 'All' ? all : all.filter(i => i.status === activeFilter);
+  const sorted = sortLedger(filtered);
+  document.getElementById('statTotal').textContent = all.length;
+  document.getElementById('statListed').textContent = '$' + all.reduce((s,i) => s + (i.listPrice||0), 0).toFixed(0);
+  document.getElementById('statEarned').textContent = '$' + all.filter(i => i.status==='Sold').reduce((s,i) => s + (i.soldPrice||0), 0).toFixed(0);
+  const list = document.getElementById('ledgerList');
+  // Apply view class
+  list.className = 'ledger-list' + (ledgerView === 'grid' ? ' view-grid' : ledgerView === 'compact' ? ' view-compact' : '');
+  if (!sorted.length) { list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>${activeFilter==='All'?'No items yet.<br>Scan an item and save it to build your ledger.':'No '+activeFilter+' items.'}</p></div>`; return; }
+  const cards = await Promise.all(sorted.map(async item => {
+    const img = await loadImage(item.id), hero = await loadImage(item.id+'_hero'), thumb = hero||img;
+    const bc = item.status==='Active'?'badge-active':item.status==='Sold'?'badge-sold':'badge-draft';
+    const profit = (item.soldPrice!=null&&item.listPrice!=null) ? item.soldPrice-item.listPrice : null;
+    const profitHtml = profit!==null?`<span class="price-tag" style="color:${profit>=0?'var(--accent2)':'var(--danger)'}">${profit>=0?'+':''}${fmtMoney(profit)}</span>`:'';
+    return `<div class="ledger-card" onclick="openItemView('${item.id}')">
+      <div class="ledger-card-inner">
+        <div class="ledger-thumb">${thumb?`<img src="${thumb}" alt="">`:'<div class="ledger-thumb-placeholder">📦</div>'}</div>
+        <div class="ledger-info">
+          <div class="ledger-item-title">${escHtml(item.title||'Untitled')}</div>
+          <div class="ledger-meta"><span class="badge ${bc}">${item.status}</span>${item.platform?`<span style="font-size:11px;color:var(--muted)">${escHtml(item.platform)}</span>`:''}</div>
+          <div class="ledger-prices">
+            <div><div class="price-tag label">Listed</div><div class="price-tag list">${fmtMoney(item.listPrice)}</div></div>
+            <div><div class="price-tag label">Sold</div><div class="price-tag sold">${fmtMoney(item.soldPrice)}</div></div>
+            ${profitHtml}
+          </div>
+          ${item.notes?`<div style="font-size:11px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(item.notes)}</div>`:''}
+        </div>
+      </div>
+      <div class="ledger-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openItemView('${item.id}')">📂 Open</button>
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openEditModal('${item.id}')">✏ Quick Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('${item.id}')">🗑</button>
+      </div>
+    </div>`;
+  }));
+  list.innerHTML = cards.join('');
+}
+
+document.getElementById('filterSelect').addEventListener('change', e => {
+  activeFilter = e.target.value; renderLedger();
+});
+
+// Sort
+document.getElementById('sortSelect').addEventListener('change', e => { activeSort = e.target.value; renderLedger(); });
+
+// View toggle
+function setView(v) {
+  ledgerView = v;
+  ['card','grid','compact'].forEach(n => {
+    document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active', n === v);
+  });
+  renderLedger();
+}
+document.getElementById('viewCard').addEventListener('click', () => setView('card'));
+document.getElementById('viewGrid').addEventListener('click', () => setView('grid'));
+document.getElementById('viewCompact').addEventListener('click', () => setView('compact'));
+
+// QUICK EDIT MODAL
+function openEditModal(id) {
+  const item = getLedgerItem(id); if (!item) return;
+  document.getElementById('editId').value = id;
+  document.getElementById('editTitle').value = item.title||'';
+  document.getElementById('editListPrice').value = item.listPrice||'';
+  document.getElementById('editSoldPrice').value = item.soldPrice||'';
+  document.getElementById('editPlatform').value = item.platform||'Facebook Marketplace';
+  document.getElementById('editStatus').value = item.status||'Draft';
+  document.getElementById('editNotes').value = item.notes||'';
+  document.getElementById('editModal').classList.add('open');
+}
+document.getElementById('editCancelBtn').addEventListener('click', () => document.getElementById('editModal').classList.remove('open'));
+document.getElementById('editSaveBtn').addEventListener('click', () => {
+  const id = document.getElementById('editId').value;
+  updateLedgerItem(id, { title: document.getElementById('editTitle').value, listPrice: parseFloat(document.getElementById('editListPrice').value)||null, soldPrice: parseFloat(document.getElementById('editSoldPrice').value)||null, platform: document.getElementById('editPlatform').value, status: document.getElementById('editStatus').value, notes: document.getElementById('editNotes').value });
+  document.getElementById('editModal').classList.remove('open'); renderLedger(); toast('Updated ✓', 'success');
+});
+function confirmDelete(id) { if (confirm('Delete this item?')) { deleteFromLedger(id); renderLedger(); toast('Deleted', 'info'); } }
+
+// EXPORT
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const ledger = getLedger();
+  toast('Building export...', 'info', 2000);
+  // Bundle each item with its images embedded as base64
+  const items = await Promise.all(ledger.map(async item => {
+    const imgDataUrl = await loadImage(item.id);
+    const heroDataUrl = await loadImage(item.id + '_hero');
+    return { ...item, _imgDataUrl: imgDataUrl || null, _heroDataUrl: heroDataUrl || null };
+  }));
+  const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `market_inventory_${new Date().toISOString().split('T')[0]}.json`; a.click();
+  toast('Ledger exported with photos ✓', 'success');
+});
+
+// IMPORT LEDGER
+document.getElementById('importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+  toast(`Reading file (${sizeMB} MB)...`, 'info', 4000);
+  try {
+    // Use FileReader instead of file.text() — more reliable for large files
+    const text = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result);
+      reader.onerror = () => rej(new Error('Could not read file'));
+      reader.readAsText(file);
+    });
+    let incoming;
+    try { incoming = JSON.parse(text); }
+    catch { throw new Error('File is not valid JSON. It may be corrupted.'); }
+    if (!Array.isArray(incoming)) throw new Error('Invalid format — expected a JSON array.');
+    const existIds = new Set(getLedger().map(i => i.id));
+    const newItems = incoming.filter(i => i.id && !existIds.has(i.id));
+    if (!newItems.length) { toast('No new items to import (all duplicates)', 'info'); e.target.value = ''; return; }
+    toast(`Importing ${newItems.length} item${newItems.length!==1?'s':''}...`, 'info', 3000);
+    // Restore images one at a time to avoid overwhelming IndexedDB
+    let imgCount = 0;
+    for (const item of newItems) {
+      if (item._imgDataUrl)  { await saveImage(item.id, item._imgDataUrl);            imgCount++; }
+      if (item._heroDataUrl) { await saveImage(item.id + '_hero', item._heroDataUrl); imgCount++; }
+    }
+    const cleanItems = newItems.map(({ _imgDataUrl, _heroDataUrl, ...rest }) => rest);
+    saveLedger([...cleanItems, ...getLedger()]);
+    renderLedger();
+    toast(`Imported ${newItems.length} item${newItems.length!==1?'s':''} + ${imgCount} photo${imgCount!==1?'s':''} ✓`, 'success', 4000);
+    const skipped = incoming.length - newItems.length;
+    if (skipped > 0) toast(`${skipped} duplicate(s) skipped`, 'info');
+  } catch (err) { toast('Import failed: ' + err.message, 'error', 5000); }
+  e.target.value = '';
+});
+
+// EXPORT SETTINGS + KEYS
+document.getElementById('exportSettingsBtn').addEventListener('click', () => {
+  const s = {
+    _type: 'mm_settings_backup',
+    groqKey: localStorage.getItem('mm_groq') || '',
+    geminiKey: localStorage.getItem('mm_gemini') || '',
+    imgProvider: localStorage.getItem('mm_imgprov') || 'pollinations',
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `mm_settings_${new Date().toISOString().split('T')[0]}.json`; a.click();
+  toast('Settings exported ✓', 'success');
+});
+
+// IMPORT SETTINGS + KEYS
+document.getElementById('importSettingsFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const s = JSON.parse(await file.text());
+    if (s._type !== 'mm_settings_backup') throw new Error('Not a settings backup file.');
+    if (s.groqKey) localStorage.setItem('mm_groq', s.groqKey);
+    if (s.geminiKey) localStorage.setItem('mm_gemini', s.geminiKey);
+    if (s.imgProvider) localStorage.setItem('mm_imgprov', s.imgProvider);
+    loadSettings();
+    toast('Settings restored ✓', 'success');
+  } catch (err) { toast('Import failed: ' + err.message, 'error', 4000); }
+  e.target.value = '';
+});
+
+// PRINT REPORT
+document.getElementById('printReportBtn').addEventListener('click', async () => {
+  const ledger = getLedger();
+  if (!ledger.length) { toast('No items to print', 'error'); return; }
+  toast('Building report...', 'info', 2000);
+  const items = await Promise.all(ledger.map(async item => ({ ...item, imgDataUrl: await loadImage(item.id), heroDataUrl: await loadImage(item.id + '_hero') })));
+  const totalListed = ledger.reduce((s,i) => s+(i.listPrice||0), 0);
+  const totalEarned = ledger.filter(i=>i.status==='Sold').reduce((s,i) => s+(i.soldPrice||0), 0);
+  const soldCount = ledger.filter(i=>i.status==='Sold').length;
+  const netPL = items.reduce((s,i) => s+((i.soldPrice||0)-(i.listPrice||0)), 0);
+  const today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  const itemCards = items.map((item, idx) => {
+    const profit = (item.soldPrice!=null&&item.listPrice!=null)?item.soldPrice-item.listPrice:null;
+    const specs = item.metadata?.technical_specs||[];
+    const pColor = profit===null?'#888':profit>=0?'#1a7a5a':'#c0392b';
+    const sColor = item.status==='Sold'?'#1a7a5a':item.status==='Active'?'#0052D4':'#888';
+    return `<div class="ic" style="page-break-inside:avoid">
+      <div class="ic-head">
+        <div class="ic-num">#${String(idx+1).padStart(2,'0')}</div>
+        <div class="ic-title-block">
+          <div class="ic-title">${escHtml(item.title||'Untitled')}</div>
+          <div class="ic-tags">${[item.metadata?.brand,item.metadata?.model,item.metadata?.condition_estimate].filter(Boolean).map(t=>`<span class="tag">${escHtml(t)}</span>`).join('')}</div>
+        </div>
+        <div class="ic-badge" style="background:${sColor}22;color:${sColor};border:1px solid ${sColor}55">${item.status}</div>
+      </div>
+      <div class="ic-body">
+        <div class="ic-imgs">
+          ${item.imgDataUrl?`<div class="ic-img-wrap"><img src="${item.imgDataUrl}"><div class="ic-img-lbl">Original</div></div>`:'<div class="ic-img-wrap ic-no-img">No Photo</div>'}
+          ${item.heroDataUrl?`<div class="ic-img-wrap"><img src="${item.heroDataUrl}"><div class="ic-img-lbl">Hero Shot</div></div>`:'<div class="ic-img-wrap ic-no-img">No Hero</div>'}
+        </div>
+        <div class="ic-detail">
+          <div class="ic-prices">
+            <div class="ic-price-block"><div class="dl">Listed</div><div class="dv dv-y">${fmtMoney(item.listPrice)}</div></div>
+            <div class="ic-price-block"><div class="dl">Sold</div><div class="dv dv-g">${fmtMoney(item.soldPrice)}</div></div>
+            <div class="ic-price-block"><div class="dl">P / L</div><div class="dv" style="color:${pColor}">${profit===null?'—':(profit>=0?'+':'')+fmtMoney(profit)}</div></div>
+          </div>
+          <div class="ic-meta-row">
+            <div><div class="dl">Platform</div><div class="ds">${escHtml(item.platform||'—')}</div></div>
+            <div><div class="dl">Date Added</div><div class="ds">${item.createdAt?new Date(item.createdAt).toLocaleDateString():'—'}</div></div>
+          </div>
+          ${specs.length?`<div><div class="dl" style="margin-bottom:4px">Specs</div><div class="spec-row">${specs.map(s=>`<span class="stag">${escHtml(s)}</span>`).join('')}</div></div>`:''}
+          ${item.description?`<div><div class="dl" style="margin-bottom:4px">Description</div><div class="desc">${escHtml(item.description)}</div></div>`:''}
+          ${item.notes?`<div><div class="dl" style="margin-bottom:4px">Notes</div><div class="notes">${escHtml(item.notes)}</div></div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ListFast Report — ${today}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#fff;color:#1a1a2e;font-size:12px}
+.rpt-header{background:#0D253C;color:#fff;padding:24px 32px;display:flex;align-items:flex-end;justify-content:space-between}
+.rpt-logo{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.5px;color:#00D2FF}
+.rpt-logo span{color:#fff}
+.rpt-meta{text-align:right}
+.rpt-date{font-size:11px;color:#9db2c8;letter-spacing:0.5px}
+.rpt-sub{font-size:14px;color:#eaf3ff;font-weight:600;margin-top:2px}
+.sum-strip{display:flex;border-bottom:2px solid #0052D4}
+.sum-cell{flex:1;padding:14px 18px;border-right:1px solid #eee}
+.sum-cell:last-child{border-right:none}
+.sum-val{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:30px;letter-spacing:0.5px}
+.sv-y{color:#0052D4}.sv-g{color:#1a7a5a}.sv-b{color:#2563eb}
+.sum-lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:600;margin-top:2px}
+.sec{padding:20px 32px}
+.sec-title{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;color:#aaa;margin-bottom:14px}
+.ic{border:1px solid #e5e5e5;border-radius:10px;margin-bottom:18px;overflow:hidden}
+.ic-head{background:#f9f9fb;border-bottom:1px solid #eee;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.ic-num{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:20px;color:#ccc;flex-shrink:0}
+.ic-title-block{flex:1;min-width:0}
+.ic-title{font-weight:600;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ic-tags{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap}
+.tag{font-size:10px;background:#f0f0f5;border:1px solid #e0e0ea;border-radius:3px;padding:1px 6px;color:#555;font-family:'DM Mono',monospace}
+.ic-badge{font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:3px 9px;border-radius:20px;flex-shrink:0}
+.ic-body{display:flex}
+.ic-imgs{width:190px;flex-shrink:0;border-right:1px solid #eee;padding:10px;display:flex;flex-direction:column;gap:8px}
+.ic-img-wrap{flex:1}
+.ic-img-wrap img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;border:1px solid #eee;display:block}
+.ic-img-lbl{font-size:9px;text-align:center;color:#aaa;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+.ic-no-img{aspect-ratio:1;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:10px;border-radius:5px;border:1px solid #eee}
+.ic-detail{flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.ic-prices{display:flex;gap:14px}
+.ic-price-block{flex:1}
+.dl{font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:#aaa;font-weight:600;margin-bottom:1px}
+.dv{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:20px;letter-spacing:0.5px}
+.dv-y{color:#0052D4}.dv-g{color:#1a7a5a}
+.ds{font-size:11px;font-weight:500;color:#333}
+.ic-meta-row{display:flex;gap:14px}
+.spec-row{display:flex;flex-wrap:wrap;gap:4px}
+.stag{font-size:10px;background:#f0f5ff;border:1px solid #dde8ff;border-radius:3px;padding:2px 7px;color:#2563eb;font-family:'DM Mono',monospace}
+.desc{font-size:11px;line-height:1.55;color:#444;white-space:pre-wrap}
+.notes{font-size:11px;line-height:1.5;color:#555;background:#f0f5ff;border-left:3px solid #0052D4;padding:5px 9px;border-radius:0 3px 3px 0}
+.rpt-footer{border-top:1px solid #eee;padding:12px 32px;display:flex;justify-content:space-between;align-items:center;color:#aaa;font-size:10px}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.ic{break-inside:avoid}@page{margin:0.5in;size:letter}}
+</style></head><body>
+<div class="rpt-header"><div class="rpt-logo">Market<span>Master</span></div><div class="rpt-meta"><div class="rpt-date">${today}</div><div class="rpt-sub">Inventory Report</div></div></div>
+<div class="sum-strip">
+  <div class="sum-cell"><div class="sum-val sv-b">${ledger.length}</div><div class="sum-lbl">Total Items</div></div>
+  <div class="sum-cell"><div class="sum-val sv-b">${soldCount}</div><div class="sum-lbl">Sold</div></div>
+  <div class="sum-cell"><div class="sum-val sv-y">${fmtMoney(totalListed)}</div><div class="sum-lbl">Total Listed Value</div></div>
+  <div class="sum-cell"><div class="sum-val sv-g">${fmtMoney(totalEarned)}</div><div class="sum-lbl">Total Earned</div></div>
+  <div class="sum-cell"><div class="sum-val" style="color:${netPL>=0?'#1a7a5a':'#c0392b'}">${netPL>=0?'+':''}${fmtMoney(netPL)}</div><div class="sum-lbl">Net P / L</div></div>
+</div>
+<div class="sec"><div class="sec-title">INVENTORY — ${ledger.length} ITEM${ledger.length!==1?'S':''}</div>${itemCards}</div>
+<div class="rpt-footer"><span>ListFast — ${today}</span><span>${ledger.length} item${ledger.length!==1?'s':''} · ${soldCount} sold · Net ${netPL>=0?'+':''}${fmtMoney(netPL)}</span></div>
+<script>window.onload=()=>window.print()<\/script>
+</body></html>`);
+  win.document.close();
+});
+
+// CLEAR
+document.getElementById('clearLedgerBtn').addEventListener('click', () => {
+  if (confirm('Clear ALL ledger data? This cannot be undone.')) {
+    localStorage.removeItem('mm_ledger');
+    if (db) db.transaction('images','readwrite').objectStore('images').clear();
+    renderLedger(); toast('All data cleared', 'info');
+  }
+});
+
+// SETTINGS
+document.getElementById('saveSettings').addEventListener('click', () => {
+  localStorage.setItem('mm_groq', document.getElementById('groqKey').value.trim());
+  localStorage.setItem('mm_gemini', document.getElementById('geminiKey').value.trim());
+  localStorage.setItem('mm_imgprov', document.getElementById('imgProvider').value);
+  [['groqVisionModel','groqVision'],['groqTextModel','groqText'],['geminiImgModel','geminiImg']].forEach(([id,k]) => { const v = document.getElementById(id).value; if (v) localStorage.setItem('mm_model_' + k, v); });
+  refreshAllModels();
+  document.getElementById('settingsDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  toast('Settings saved ✓', 'success');
+});
+document.getElementById('refreshModelsBtn').addEventListener('click', refreshAllModels);
+document.getElementById('settingsBtn').addEventListener('click', () => { document.getElementById('settingsDrawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); });
+document.getElementById('drawerClose').addEventListener('click', () => { document.getElementById('settingsDrawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); });
+document.getElementById('drawerOverlay').addEventListener('click', () => { document.getElementById('settingsDrawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); });
+
+// TABS
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  if (name === 'ledger') renderLedger();
+}
+document.querySelectorAll('.tab').forEach(t => { t.addEventListener('click', () => switchTab(t.dataset.tab)); t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchTab(t.dataset.tab); } }); });
+
+// INIT
+document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
+document.getElementById('splashVersion').textContent = 'v' + APP_VERSION;
+(async () => { await initDB(); loadSettings(); renderLedger(); })();
+
+// ===== SPLASH SCREEN =====
+(function() {
+  const SEEN_KEY = 'mm_seen_splash';
+  const splash = document.getElementById('splash');
+  const actionEl = document.getElementById('splashAction');
+  const hasSeenBefore = localStorage.getItem(SEEN_KEY);
+
+  function dismissSplash() {
+    splash.classList.add('hide');
+    setTimeout(() => splash.classList.add('gone'), 520);
+    localStorage.setItem(SEEN_KEY, '1');
+  }
+
+  if (hasSeenBefore) {
+    // Returning user: auto-dismiss after progress bar animation (≈2.1s)
+    actionEl.innerHTML = '<div class="splash-auto-bar"><div class="splash-auto-fill"></div></div>';
+    setTimeout(dismissSplash, 2100);
+  } else {
+    // First-time user: show tap-to-enter button
+    const btn = document.createElement('button');
+    btn.className = 'splash-enter-btn';
+    btn.textContent = 'Get Started';
+    btn.addEventListener('click', dismissSplash);
+    actionEl.appendChild(btn);
+  }
+})();
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      const prompt = w => {
+        if (document.getElementById('updateBar')) return;
+        const bar = document.createElement('div'); bar.id = 'updateBar';
+        bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:9998;background:var(--text);color:#fff;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;box-shadow:0 8px 24px rgba(13,37,60,.3)';
+        bar.innerHTML = '<span>Update ready</span><button class="btn btn-primary btn-sm" type="button" style="flex:0 0 auto">Reload</button>';
+        bar.querySelector('button').addEventListener('click', () => { w.postMessage('SKIP_WAITING'); });
+        document.body.appendChild(bar);
+      };
+      if (reg.waiting && navigator.serviceWorker.controller) prompt(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw && nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller) prompt(nw); });
+      });
+      let reloaded = false; const hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+    }).catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
